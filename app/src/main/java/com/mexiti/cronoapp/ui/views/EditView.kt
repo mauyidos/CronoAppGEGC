@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,11 +38,12 @@ import com.mexiti.cronoapp.viewModel.CronometroViewModel
 import com.mexiti.cronoapp.viewModel.DataViewModel
 
 @Composable
-fun ContentAddView(
+fun ContentEditView(
     it:PaddingValues,
     navController: NavController,
     cronometroVM: CronometroViewModel,
-    dataVM: DataViewModel
+    dataVM: DataViewModel,
+    id: Long
 ) {
     val state = cronometroVM.state
     LaunchedEffect(state.cronometroActivo) {
@@ -64,61 +66,44 @@ fun ContentAddView(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.padding(vertical = 16.dp)
         ) {
-            CircleButton(
-                icon = painterResource(id = R.drawable.play_arrow_24),
+            CircleButton(icon = painterResource(id = R.drawable.play_arrow_24),
                 //Enable Cronom State
                 enabled = !state.cronometroActivo
             ) {
                 //Start cronomVM.iniciar()
                 cronometroVM.iniciar()
             }
-            CircleButton(
-                icon = painterResource(id = R.drawable.pause_24),
+            CircleButton(icon = painterResource(id = R.drawable.pause_24),
                 //State pause
                 enabled = state.cronometroActivo
             ) {
                 //Start cronomVM.pausar()
                 cronometroVM.pausar()
             }
-            CircleButton(
-                icon = painterResource(id = R.drawable.stop_24),
-                //State inactivo
-                enabled = !state.cronometroActivo
-            ) {
-                //Start cronomVM.detener()
-                cronometroVM.detener()
-            }
-            CircleButton(
-                icon = painterResource(id = R.drawable.save_24),
-                //state Save
-                enabled = !state.cronometroActivo
-            ) {
-                //Start cronomVM.showTextField()
-                cronometroVM.showTextField()
-            }
         }
-        /*
-            Code to Save time if state.showTextField
-         */
-        if (state.showTextField) {
-            MainTextField(
-                value = state.title,
-                onValueChange = { cronometroVM.onValue(it) },
-                label = "Title")
+        MainTextField(
+            value = state.title,
+            onValueChange = {cronometroVM.onValue(it)},
+            label = "Title"
+        )
+        Button(
+            onClick = {
+            dataVM.updateCrono(
+                Cronos(
+                    id = id,
+                    title = state.title,
+                    crono = cronometroVM.time
+                )
+            )
+            navController.popBackStack()
+            }
+        ) {
+            Text(text = "Guardar Cambios")
+        }
 
-            Button(
-                onClick = {
-                    dataVM.addCrono(
-                        Cronos(
-                            title = state.title,
-                            crono = cronometroVM.time
-                        )
-                    )
-                    cronometroVM.detener()
-                    navController.popBackStack()
-                }
-            ) {
-                Text(text = "Guardar")
+        DisposableEffect(Unit) {
+            onDispose {
+                cronometroVM.detener()
             }
         }
     }
@@ -126,15 +111,16 @@ fun ContentAddView(
 //AddView(navController:  navegación entre vistas)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddView(
+fun EditView(
     navController: NavController,
     cronometroVM: CronometroViewModel,
-    dataVM: DataViewModel
+    dataVM: DataViewModel,
+    id: Long
 ) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { MainTitle(title = stringResource(R.string.add_view) ) },
+                title = { MainTitle(title = "Edit" ) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
@@ -146,12 +132,12 @@ fun AddView(
             )
         }
     ) {
-        ContentAddView(it = it, navController = navController, cronometroVM, dataVM)
+        ContentEditView(it = it, navController = navController, cronometroVM, dataVM, id)
     }
 }
 
 @Preview
 @Composable
-fun AddViewPreview(){
+fun EditViewPreview(){
     //AddView()
 }
